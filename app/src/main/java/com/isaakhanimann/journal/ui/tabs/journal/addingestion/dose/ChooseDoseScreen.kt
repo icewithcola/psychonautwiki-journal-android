@@ -231,7 +231,7 @@ fun ChooseDoseScreen(
             TopAppBar(title = { Text("$substanceName ${administrationRoute.displayText} dose") })
         },
         floatingActionButton = {
-            if (isValidDose) {
+            if (isValidDose && isValidPurity) {
                 ExtendedFloatingActionButton(
                     modifier = Modifier.imePadding(),
                     onClick = navigateToNext,
@@ -343,7 +343,7 @@ fun ChooseDoseScreen(
                             )
                         },
                         textStyle = textStyle,
-                        label = { Text("Pure Dose", style = textStyle) },
+                        label = { Text("Dose", style = textStyle) },
                         isError = !isValidDose,
                         trailingIcon = {
                             Text(
@@ -426,7 +426,8 @@ fun ChooseDoseScreen(
                                 modifier = Modifier.fillMaxWidth()
                             )
                             val mean = doseText.toDoubleOrNull()
-                            val standardDeviation = estimatedDoseStandardDeviationText.toDoubleOrNull()
+                            val standardDeviation =
+                                estimatedDoseStandardDeviationText.toDoubleOrNull()
                             val isExplanationShown = mean != null && standardDeviation != null
                             AnimatedVisibility(isExplanationShown) {
                                 if (mean != null && standardDeviation != null) {
@@ -435,6 +436,38 @@ fun ChooseDoseScreen(
                                         standardDeviation = standardDeviation,
                                         unit = units
                                     )
+                                }
+                            }
+                        }
+                    }
+                    // Purity
+                    Column {
+                        OutlinedTextField(
+                            value = purityText,
+                            onValueChange = onPurityChange,
+                            textStyle = textStyle,
+                            label = { Text("Purity", style = textStyle) },
+                            isError = !isValidPurity,
+                            trailingIcon = {
+                                Text(
+                                    text = "%",
+                                    style = textStyle,
+                                    modifier = Modifier.padding(horizontal = horizontalPadding)
+                                )
+                            },
+                            keyboardActions = KeyboardActions(onDone = {
+                                focusManager.clearFocus()
+                            }),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (isValidPurity) {
+                            purityText.toDoubleOrNull()?.let { purity ->
+                                if (purity > 0 && purity < 100 && convertedDoseAndUnitText != null) { // 100 can also be ignored
+                                    Column(horizontalAlignment = Alignment.Start) {
+                                        Text(convertedDoseAndUnitText)
+                                    }
                                 }
                             }
                         }
@@ -484,28 +517,28 @@ fun ChooseDoseScreen(
             TextButton(onClick = { isShowingUnknownDoseDialog = true }) {
                 Text(text = "Log unknown dose")
             }
-            AnimatedVisibility(visible = isValidDose) {
-                ElevatedCard(
-                    modifier = Modifier.padding(
-                        horizontal = horizontalPadding,
-                        vertical = 4.dp
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(
-                            horizontal = horizontalPadding,
-                            vertical = 10.dp
-                        )
-                    ) {
-                        PurityCalculation(
-                            purityText = purityText,
-                            onPurityChange = onPurityChange,
-                            convertedDoseAndUnitText = convertedDoseAndUnitText,
-                            isValidPurity = isValidPurity
-                        )
-                    }
-                }
-            }
+//            AnimatedVisibility(visible = isValidDose) {
+//                ElevatedCard(
+//                    modifier = Modifier.padding(
+//                        horizontal = horizontalPadding,
+//                        vertical = 4.dp
+//                    )
+//                ) {
+//                    Column(
+//                        modifier = Modifier.padding(
+//                            horizontal = horizontalPadding,
+//                            vertical = 10.dp
+//                        )
+//                    ) {
+//                        PurityCalculation(
+//                            purityText = purityText,
+//                            onPurityChange = onPurityChange,
+//                            convertedDoseAndUnitText = convertedDoseAndUnitText,
+//                            isValidPurity = isValidPurity
+//                        )
+//                    }
+//                }
+//            }
             AnimatedVisibility(visible = isShowingUnknownDoseDialog) {
                 UnknownDoseDialog(
                     useUnknownDoseAndNavigate = useUnknownDoseAndNavigate,

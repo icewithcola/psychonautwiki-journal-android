@@ -32,6 +32,8 @@ import com.isaakhanimann.journal.data.substances.repositories.SubstanceRepositor
 import com.isaakhanimann.journal.ui.main.navigation.graphs.ChooseDoseRoute
 import com.isaakhanimann.journal.ui.tabs.search.substance.roa.toReadableString
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 
 @HiltViewModel
@@ -57,19 +59,30 @@ class ChooseDoseViewModel @Inject constructor(
                 null
             }
         }
-    val isPurityValid: Boolean get() = purity != null
+    val isPurityValid: Boolean get() {
+        val p = purity
+        return (p != null && p > 0 && p <= 100)
+    }
     val impureDoseWithUnit: String?
         get() {
             dose.let {
-                if (it == null) return null
-                purity.let { safePurity ->
-                    if (safePurity == null) return null
-                    val result = it.div(safePurity).times(100)
-                    return result.toReadableString() + " impure ${roaDose?.units ?: ""}"
+                return if (purity == 100.0) {
+                    "$it $units"
+                } else {
+                    "$purity% ${substance.name} of $doseText $units = $it $units"
                 }
             }
         }
-    val dose: Double? get() = doseText.toDoubleOrNull()
+    val dose: Double?
+        get() = doseText.toDoubleOrNull()?.let { d ->
+            val p = purity ?: return@let d
+            BigDecimal.valueOf(d)
+                .multiply(BigDecimal.valueOf(p))
+                .divide(BigDecimal.valueOf(100))
+                .setScale(3, RoundingMode.HALF_DOWN)
+                .toDouble()
+
+        }
     val estimatedDoseStandardDeviation: Double? get() = estimatedDoseStandardDeviationText.toDoubleOrNull()
     val isValidDose: Boolean get() = dose != null
     val currentDoseClass: DoseClass? get() = roaDose?.getDoseClass(ingestionDose = dose)
