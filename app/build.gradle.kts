@@ -1,29 +1,33 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
     id("androidx.room")
     kotlin("plugin.serialization") version "2.0.20"
-    id("kotlin-kapt") // this needs to be on bottom
 }
 
 android {
     namespace = "com.isaakhanimann.journal"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.isaakhanimann.journal"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 62
         versionName = "11.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    room {
-        schemaDirectory("$projectDir/schemas")
+    signingConfigs {
+        create("release") {
+            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            storeFile = file(System.getenv("SIGNING_KEY_STORE_PATH") ?: "keystore.jks")
+            storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+        }
     }
 
     buildTypes {
@@ -35,17 +39,26 @@ android {
                 "proguard-rules.pro"
             )
             ndk.debugSymbolLevel = "FULL"
+            signingConfig = signingConfigs.getByName("release")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
+    }
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
@@ -69,13 +82,12 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     implementation(libs.androidx.navigation.compose)
 
     implementation(libs.androidx.room.runtime)
-    annotationProcessor(libs.androidx.room.compiler)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
     implementation(libs.kotlinx.coroutines.core)
@@ -90,8 +102,4 @@ dependencies {
 
     implementation(libs.androidx.core.splashscreen)
 
-}
-
-kapt {
-    correctErrorTypes = true
 }
