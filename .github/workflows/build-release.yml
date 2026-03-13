@@ -30,9 +30,7 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_STORE_PATH: "release.jks"
 
-      # Uploads to the action results if not pointed at a tag
       - uses: actions/upload-artifact@v4
-        if: "! startsWith(github.ref, 'refs/tags/')"
         with:
           name: "psychonautwiki-journal_${{ github.ref_name }}.apk"
           path: "app/build/outputs/apk/release/app-release.apk"
